@@ -1103,6 +1103,15 @@ class PlayerViewModel @JvmOverloads constructor(
         }
     }
 
+    fun stopHttpServer() {
+        val server = (currentSource.value as? AnimeHttpSource)?.server
+            ?: return
+
+        if (server.isRunning()) {
+            server.stop()
+        }
+    }
+
     // ====== OLD ======
 
     private val eventChannel = Channel<Event>()
