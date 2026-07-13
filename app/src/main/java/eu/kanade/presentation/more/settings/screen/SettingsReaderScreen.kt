@@ -26,7 +26,7 @@ object SettingsReaderScreen : SearchableSettings {
 
     @ReadOnlyComposable
     @Composable
-    override fun getTitleRes() = MR.strings.pref_category_reader
+    override fun getTitleRes() = AYMR.strings.pref_category_manga_reader
 
     @Composable
     override fun getPreferences(): List<Preference> {

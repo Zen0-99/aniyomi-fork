@@ -13,6 +13,10 @@ import eu.kanade.domain.extension.anime.interactor.GetAnimeExtensionLanguages
 import eu.kanade.domain.extension.anime.interactor.GetAnimeExtensionSources
 import eu.kanade.domain.extension.anime.interactor.GetAnimeExtensionsByType
 import eu.kanade.domain.extension.anime.interactor.TrustAnimeExtension
+import eu.kanade.domain.extension.novel.interactor.TrustNovelExtension
+import eu.kanade.domain.extension.novel.interactor.GetNovelExtensionsByType
+import eu.kanade.domain.extension.novel.interactor.GetNovelExtensionLanguages
+import eu.kanade.domain.extension.novel.interactor.GetNovelExtensionSources
 import eu.kanade.domain.extension.manga.interactor.GetExtensionSources
 import eu.kanade.domain.extension.manga.interactor.GetMangaExtensionLanguages
 import eu.kanade.domain.extension.manga.interactor.GetMangaExtensionsByType
@@ -29,6 +33,13 @@ import eu.kanade.domain.source.anime.interactor.GetLanguagesWithAnimeSources
 import eu.kanade.domain.source.anime.interactor.ToggleAnimeIncognito
 import eu.kanade.domain.source.anime.interactor.ToggleAnimeSource
 import eu.kanade.domain.source.anime.interactor.ToggleAnimeSourcePin
+import eu.kanade.domain.entries.novel.interactor.UpdateNovel
+import eu.kanade.domain.items.chapter.interactor.SetNovelReadStatus
+import tachiyomi.domain.items.chapter.interactor.UpdateNovelChapter
+import eu.kanade.domain.source.novel.interactor.GetEnabledNovelSources
+import eu.kanade.domain.source.novel.interactor.GetNovelSourcesWithFavoriteCount
+import eu.kanade.domain.source.novel.interactor.ToggleNovelSource
+import eu.kanade.domain.source.novel.interactor.ToggleNovelSourcePin
 import eu.kanade.domain.source.interactor.SetMigrateSorting
 import eu.kanade.domain.source.interactor.ToggleLanguage
 import eu.kanade.domain.source.manga.interactor.GetEnabledMangaSources
@@ -49,6 +60,7 @@ import eu.kanade.domain.track.manga.interactor.TrackChapter
 import eu.kanade.tachiyomi.ui.player.utils.TrackSelect
 import mihon.data.repository.anime.AnimeExtensionRepoRepositoryImpl
 import mihon.data.repository.manga.MangaExtensionRepoRepositoryImpl
+import mihon.data.repository.novel.NovelExtensionRepoRepositoryImpl
 import mihon.domain.extensionrepo.anime.interactor.CreateAnimeExtensionRepo
 import mihon.domain.extensionrepo.anime.interactor.DeleteAnimeExtensionRepo
 import mihon.domain.extensionrepo.anime.interactor.GetAnimeExtensionRepo
@@ -63,6 +75,13 @@ import mihon.domain.extensionrepo.manga.interactor.GetMangaExtensionRepoCount
 import mihon.domain.extensionrepo.manga.interactor.ReplaceMangaExtensionRepo
 import mihon.domain.extensionrepo.manga.interactor.UpdateMangaExtensionRepo
 import mihon.domain.extensionrepo.manga.repository.MangaExtensionRepoRepository
+import mihon.domain.extensionrepo.novel.repository.NovelExtensionRepoRepository
+import mihon.domain.extensionrepo.novel.interactor.CreateNovelExtensionRepo
+import mihon.domain.extensionrepo.novel.interactor.DeleteNovelExtensionRepo
+import mihon.domain.extensionrepo.novel.interactor.GetNovelExtensionRepo
+import mihon.domain.extensionrepo.novel.interactor.GetNovelExtensionRepoCount
+import mihon.domain.extensionrepo.novel.interactor.ReplaceNovelExtensionRepo
+import mihon.domain.extensionrepo.novel.interactor.UpdateNovelExtensionRepo
 import mihon.domain.extensionrepo.service.ExtensionRepoService
 import mihon.domain.items.chapter.interactor.FilterChaptersForDownload
 import mihon.domain.items.episode.interactor.FilterEpisodesForDownload
@@ -73,19 +92,30 @@ import tachiyomi.data.category.manga.MangaCategoryRepositoryImpl
 import tachiyomi.data.custombutton.CustomButtonRepositoryImpl
 import tachiyomi.data.entries.anime.AnimeRepositoryImpl
 import tachiyomi.data.entries.manga.MangaRepositoryImpl
+import tachiyomi.data.entries.novel.NovelRepositoryImpl
+import tachiyomi.data.category.novel.NovelCategoryRepositoryImpl
 import tachiyomi.data.history.anime.AnimeHistoryRepositoryImpl
 import tachiyomi.data.history.manga.MangaHistoryRepositoryImpl
+import tachiyomi.data.history.novel.NovelHistoryRepositoryImpl
 import tachiyomi.data.items.chapter.ChapterRepositoryImpl
+import tachiyomi.data.items.chapter.NovelChapterRepositoryImpl
 import tachiyomi.data.items.episode.EpisodeRepositoryImpl
 import tachiyomi.data.release.ReleaseServiceImpl
 import tachiyomi.data.source.anime.AnimeSourceRepositoryImpl
 import tachiyomi.data.source.anime.AnimeStubSourceRepositoryImpl
 import tachiyomi.data.source.manga.MangaSourceRepositoryImpl
 import tachiyomi.data.source.manga.MangaStubSourceRepositoryImpl
+import tachiyomi.data.source.novel.NovelSourceRepositoryImpl
+import tachiyomi.data.source.novel.NovelStubSourceRepositoryImpl
 import tachiyomi.data.track.anime.AnimeTrackRepositoryImpl
 import tachiyomi.data.track.manga.MangaTrackRepositoryImpl
+import tachiyomi.data.savedsearches.anime.AnimeSavedSearchRepositoryImpl
+import tachiyomi.data.savedsearches.manga.MangaSavedSearchRepositoryImpl
+import tachiyomi.data.savedsearches.novel.NovelSavedSearchRepositoryImpl
+import tachiyomi.data.track.novel.NovelTrackRepositoryImpl
 import tachiyomi.data.updates.anime.AnimeUpdatesRepositoryImpl
 import tachiyomi.data.updates.manga.MangaUpdatesRepositoryImpl
+import tachiyomi.data.updates.novel.NovelUpdatesRepositoryImpl
 import tachiyomi.domain.category.anime.interactor.CreateAnimeCategoryWithName
 import tachiyomi.domain.category.anime.interactor.DeleteAnimeCategory
 import tachiyomi.domain.category.anime.interactor.GetAnimeCategories
@@ -102,6 +132,7 @@ import tachiyomi.domain.category.anime.repository.AnimeCategoryRepository
 import tachiyomi.domain.category.manga.interactor.CreateMangaCategoryWithName
 import tachiyomi.domain.category.manga.interactor.DeleteMangaCategory
 import tachiyomi.domain.category.manga.interactor.GetMangaCategories
+import tachiyomi.domain.category.novel.interactor.GetNovelCategories
 import tachiyomi.domain.category.manga.interactor.GetVisibleMangaCategories
 import tachiyomi.domain.category.manga.interactor.HideMangaCategory
 import tachiyomi.domain.category.manga.interactor.RenameMangaCategory
@@ -142,6 +173,22 @@ import tachiyomi.domain.entries.manga.interactor.NetworkToLocalManga
 import tachiyomi.domain.entries.manga.interactor.ResetMangaViewerFlags
 import tachiyomi.domain.entries.manga.interactor.SetMangaChapterFlags
 import tachiyomi.domain.entries.manga.repository.MangaRepository
+import tachiyomi.domain.entries.novel.interactor.GetNovel
+import tachiyomi.domain.entries.novel.interactor.GetNovelFavorites
+import tachiyomi.domain.entries.novel.interactor.GetNovelByUrlAndSourceId
+import tachiyomi.domain.entries.novel.interactor.GetLibraryNovels
+import tachiyomi.domain.entries.novel.interactor.GetNovelWithChapters
+import tachiyomi.domain.entries.novel.interactor.GetDuplicateLibraryNovel
+import tachiyomi.domain.entries.novel.interactor.NetworkToLocalNovel
+import tachiyomi.domain.entries.novel.interactor.SetNovelChapterFlags
+import tachiyomi.domain.entries.novel.interactor.SetNovelDefaultChapterFlags
+import tachiyomi.domain.entries.novel.repository.NovelRepository
+import tachiyomi.domain.source.novel.interactor.GetRemoteNovel
+import tachiyomi.domain.source.novel.repository.NovelSourceRepository
+import tachiyomi.domain.category.novel.repository.NovelCategoryRepository
+import tachiyomi.domain.category.novel.interactor.GetVisibleNovelCategories
+import tachiyomi.domain.category.novel.interactor.SetNovelCategories
+import tachiyomi.domain.category.novel.interactor.SetSortModeForNovelCategory
 import tachiyomi.domain.history.anime.interactor.GetAnimeHistory
 import tachiyomi.domain.history.anime.interactor.GetNextEpisodes
 import tachiyomi.domain.history.anime.interactor.RemoveAnimeHistory
@@ -153,6 +200,12 @@ import tachiyomi.domain.history.manga.interactor.GetTotalReadDuration
 import tachiyomi.domain.history.manga.interactor.RemoveMangaHistory
 import tachiyomi.domain.history.manga.interactor.UpsertMangaHistory
 import tachiyomi.domain.history.manga.repository.MangaHistoryRepository
+import tachiyomi.domain.history.novel.interactor.GetNovelHistory
+import tachiyomi.domain.history.novel.interactor.GetNextNovelChapters
+import tachiyomi.domain.history.novel.interactor.GetTotalNovelReadDuration
+import tachiyomi.domain.history.novel.interactor.RemoveNovelHistory
+import tachiyomi.domain.history.novel.interactor.UpsertNovelHistory
+import tachiyomi.domain.history.novel.repository.NovelHistoryRepository
 import tachiyomi.domain.items.chapter.interactor.GetChapter
 import tachiyomi.domain.items.chapter.interactor.GetChapterByUrlAndMangaId
 import tachiyomi.domain.items.chapter.interactor.GetChaptersByMangaId
@@ -160,6 +213,9 @@ import tachiyomi.domain.items.chapter.interactor.SetMangaDefaultChapterFlags
 import tachiyomi.domain.items.chapter.interactor.ShouldUpdateDbChapter
 import tachiyomi.domain.items.chapter.interactor.UpdateChapter
 import tachiyomi.domain.items.chapter.repository.ChapterRepository
+import tachiyomi.domain.items.chapter.interactor.GetNovelChapter
+import tachiyomi.domain.items.chapter.interactor.GetNovelChaptersByNovelId
+import tachiyomi.domain.items.chapter.repository.NovelChapterRepository
 import tachiyomi.domain.items.episode.interactor.GetEpisode
 import tachiyomi.domain.items.episode.interactor.GetEpisodeByUrlAndAnimeId
 import tachiyomi.domain.items.episode.interactor.GetEpisodesByAnimeId
@@ -176,6 +232,7 @@ import tachiyomi.domain.source.anime.interactor.GetAnimeSourcesWithNonLibraryAni
 import tachiyomi.domain.source.anime.interactor.GetRemoteAnime
 import tachiyomi.domain.source.anime.repository.AnimeSourceRepository
 import tachiyomi.domain.source.anime.repository.AnimeStubSourceRepository
+import tachiyomi.domain.source.novel.repository.NovelStubSourceRepository
 import tachiyomi.domain.source.manga.interactor.GetMangaSourcesWithNonLibraryManga
 import tachiyomi.domain.source.manga.interactor.GetRemoteManga
 import tachiyomi.domain.source.manga.repository.MangaSourceRepository
@@ -190,10 +247,28 @@ import tachiyomi.domain.track.manga.interactor.GetMangaTracks
 import tachiyomi.domain.track.manga.interactor.GetTracksPerManga
 import tachiyomi.domain.track.manga.interactor.InsertMangaTrack
 import tachiyomi.domain.track.manga.repository.MangaTrackRepository
+import tachiyomi.domain.track.novel.interactor.DeleteNovelTrack
+import tachiyomi.domain.track.novel.interactor.GetNovelTracks
+import tachiyomi.domain.track.novel.interactor.InsertNovelTrack
+import tachiyomi.domain.track.novel.repository.NovelTrackRepository
+import tachiyomi.domain.savedsearches.anime.interactor.DeleteAnimeSavedSearch
+import tachiyomi.domain.savedsearches.anime.interactor.GetAnimeSavedSearches
+import tachiyomi.domain.savedsearches.anime.interactor.InsertAnimeSavedSearch
+import tachiyomi.domain.savedsearches.anime.repository.AnimeSavedSearchRepository
+import tachiyomi.domain.savedsearches.manga.interactor.DeleteMangaSavedSearch
+import tachiyomi.domain.savedsearches.manga.interactor.GetMangaSavedSearches
+import tachiyomi.domain.savedsearches.manga.interactor.InsertMangaSavedSearch
+import tachiyomi.domain.savedsearches.manga.repository.MangaSavedSearchRepository
+import tachiyomi.domain.savedsearches.novel.interactor.DeleteNovelSavedSearch
+import tachiyomi.domain.savedsearches.novel.interactor.GetNovelSavedSearches
+import tachiyomi.domain.savedsearches.novel.interactor.InsertNovelSavedSearch
+import tachiyomi.domain.savedsearches.novel.repository.NovelSavedSearchRepository
 import tachiyomi.domain.updates.anime.interactor.GetAnimeUpdates
 import tachiyomi.domain.updates.anime.repository.AnimeUpdatesRepository
 import tachiyomi.domain.updates.manga.interactor.GetMangaUpdates
 import tachiyomi.domain.updates.manga.repository.MangaUpdatesRepository
+import tachiyomi.domain.updates.novel.interactor.GetNovelUpdates
+import tachiyomi.domain.updates.novel.repository.NovelUpdatesRepository
 import uy.kohesive.injekt.api.InjektModule
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.addFactory
@@ -344,6 +419,9 @@ class DomainModule : InjektModule {
         addFactory { GetMangaExtensionsByType(get(), get()) }
         addFactory { GetExtensionSources(get()) }
         addFactory { GetMangaExtensionLanguages(get(), get()) }
+        addFactory { GetNovelExtensionsByType(get(), get()) }
+        addFactory { GetNovelExtensionLanguages(get(), get()) }
+        addFactory { GetNovelExtensionSources(get()) }
 
         addSingletonFactory<AnimeUpdatesRepository> { AnimeUpdatesRepositoryImpl(get()) }
         addFactory { GetAnimeUpdates(get()) }
@@ -374,6 +452,7 @@ class DomainModule : InjektModule {
         addFactory { ToggleMangaSourcePin(get()) }
         addFactory { TrustAnimeExtension(get(), get()) }
         addFactory { TrustMangaExtension(get(), get()) }
+        addFactory { TrustNovelExtension(get(), get()) }
 
         addFactory { ExtensionRepoService(get(), get()) }
 
@@ -397,6 +476,58 @@ class DomainModule : InjektModule {
         addFactory { ToggleMangaIncognito(get()) }
         addFactory { GetMangaIncognitoState(get(), get(), get()) }
 
+        addSingletonFactory<NovelStubSourceRepository> { NovelStubSourceRepositoryImpl(get()) }
+        addSingletonFactory<NovelSourceRepository> { NovelSourceRepositoryImpl(get()) }
+        addSingletonFactory<NovelExtensionRepoRepository> { NovelExtensionRepoRepositoryImpl(get()) }
+        addFactory { GetNovelExtensionRepo(get()) }
+        addFactory { GetNovelExtensionRepoCount(get()) }
+        addFactory { CreateNovelExtensionRepo(get(), get()) }
+        addFactory { DeleteNovelExtensionRepo(get()) }
+        addFactory { ReplaceNovelExtensionRepo(get()) }
+        addFactory { UpdateNovelExtensionRepo(get(), get()) }
+
+        addSingletonFactory<NovelRepository> { NovelRepositoryImpl(get()) }
+        addSingletonFactory<NovelChapterRepository> { NovelChapterRepositoryImpl(get()) }
+        addSingletonFactory<NovelCategoryRepository> { NovelCategoryRepositoryImpl(get()) }
+        addFactory { GetNovel(get()) }
+        addFactory { GetNovelFavorites(get()) }
+        addFactory { GetNovelByUrlAndSourceId(get()) }
+        addFactory { GetNovelChapter(get()) }
+        addFactory { GetNovelChaptersByNovelId(get()) }
+        addFactory { GetNovelCategories(get()) }
+        addFactory { GetLibraryNovels(get()) }
+        addFactory { GetVisibleNovelCategories(get()) }
+        addFactory { SetNovelCategories(get()) }
+        addFactory { SetSortModeForNovelCategory(get(), get()) }
+        addFactory { NetworkToLocalNovel(get()) }
+        addFactory { GetRemoteNovel(get()) }
+        addFactory { GetEnabledNovelSources(get(), get()) }
+        addFactory { GetNovelSourcesWithFavoriteCount(get(), get()) }
+        addFactory { ToggleNovelSource(get()) }
+        addFactory { ToggleNovelSourcePin(get()) }
+        addFactory { GetNovelWithChapters(get(), get()) }
+        addFactory { GetDuplicateLibraryNovel(get()) }
+        addFactory { SetNovelChapterFlags(get()) }
+        addFactory { SetNovelDefaultChapterFlags(get(), get(), get()) }
+        addFactory { UpdateNovel(get()) }
+        addFactory { UpdateNovelChapter(get()) }
+        addFactory { SetNovelReadStatus(get()) }
+
+        addSingletonFactory<NovelHistoryRepository> { NovelHistoryRepositoryImpl(get()) }
+        addFactory { GetNovelHistory(get()) }
+        addFactory { UpsertNovelHistory(get()) }
+        addFactory { RemoveNovelHistory(get()) }
+        addFactory { GetTotalNovelReadDuration(get()) }
+        addFactory { GetNextNovelChapters(get(), get(), get()) }
+
+        addSingletonFactory<NovelUpdatesRepository> { NovelUpdatesRepositoryImpl(get()) }
+        addFactory { GetNovelUpdates(get()) }
+
+        addSingletonFactory<NovelTrackRepository> { NovelTrackRepositoryImpl(get()) }
+        addFactory { GetNovelTracks(get()) }
+        addFactory { InsertNovelTrack(get()) }
+        addFactory { DeleteNovelTrack(get()) }
+
         addSingletonFactory<CustomButtonRepository> { CustomButtonRepositoryImpl(get()) }
         addFactory { CreateCustomButton(get()) }
         addFactory { DeleteCustomButton(get()) }
@@ -406,5 +537,20 @@ class DomainModule : InjektModule {
         addFactory { ToggleFavoriteCustomButton(get()) }
 
         addFactory { TrackSelect(get(), get()) }
+
+        addSingletonFactory<MangaSavedSearchRepository> { MangaSavedSearchRepositoryImpl(get()) }
+        addFactory { GetMangaSavedSearches(get()) }
+        addFactory { InsertMangaSavedSearch(get()) }
+        addFactory { DeleteMangaSavedSearch(get()) }
+
+        addSingletonFactory<AnimeSavedSearchRepository> { AnimeSavedSearchRepositoryImpl(get()) }
+        addFactory { GetAnimeSavedSearches(get()) }
+        addFactory { InsertAnimeSavedSearch(get()) }
+        addFactory { DeleteAnimeSavedSearch(get()) }
+
+        addSingletonFactory<NovelSavedSearchRepository> { NovelSavedSearchRepositoryImpl(get()) }
+        addFactory { GetNovelSavedSearches(get()) }
+        addFactory { InsertNovelSavedSearch(get()) }
+        addFactory { DeleteNovelSavedSearch(get()) }
     }
 }

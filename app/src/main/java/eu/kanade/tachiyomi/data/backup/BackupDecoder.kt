@@ -3,7 +3,9 @@ package eu.kanade.tachiyomi.data.backup
 import android.content.Context
 import android.net.Uri
 import eu.kanade.tachiyomi.data.backup.models.Backup
+import eu.kanade.tachiyomi.data.backup.models.BackupNovelSource
 import eu.kanade.tachiyomi.data.backup.models.LegacyBackup
+import eu.kanade.tachiyomi.data.backup.models.MikoBackup
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.protobuf.ProtoBuf
 import okio.buffer
@@ -43,7 +45,12 @@ class BackupDecoder(
                     parser.decodeFromByteArray(LegacyBackup.serializer(), backupString)
                         .toBackup()
                 } else {
-                    parser.decodeFromByteArray(Backup.serializer(), backupString)
+                    val backup = parser.decodeFromByteArray(Backup.serializer(), backupString)
+                    if (backup.backupNovels.isEmpty()) {
+                        tryMikoBackup(backupString, backup)
+                    } else {
+                        backup
+                    }
                 }
             } catch (_: SerializationException) {
                 throw IOException(context.stringResource(MR.strings.invalid_backup_file_unknown))
@@ -55,5 +62,24 @@ class BackupDecoder(
         private const val MAGIC_JSON_SIGNATURE1 = 0x7b7d // `{}`
         private const val MAGIC_JSON_SIGNATURE2 = 0x7b22 // `{"`
         private const val MAGIC_JSON_SIGNATURE3 = 0x7b0a // `{\n`
+    }
+
+    private fun tryMikoBackup(bytes: ByteArray, backup: Backup): Backup {
+        return try {
+            val mikoBackup = parser.decodeFromByteArray(MikoBackup.serializer(), bytes)
+            if (mikoBackup.backupNovels.isEmpty()) {
+                backup
+            } else {
+                backup.copy(
+                    backupNovels = mikoBackup.backupNovels.map { it.toBackupNovel() },
+                    backupNovelCategory = mikoBackup.backupNovelCategories.map { it.toBackupCategory() },
+                    backupNovelSources = mikoBackup.backupNovelSources.map { BackupNovelSource(it.name, it.sourceId) },
+                )
+            }
+        } catch (_: SerializationException) {
+            backup
+        } catch (_: Exception) {
+            backup
+        }
     }
 }

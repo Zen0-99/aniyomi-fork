@@ -1,0 +1,31 @@
+CREATE TABLE saved_searches(
+    _id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    source_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    query TEXT NOT NULL,
+    filters_json TEXT NOT NULL
+);
+
+getSavedSearches:
+SELECT *
+FROM saved_searches
+WHERE source_id = :sourceId
+ORDER BY name COLLATE NOCASE;
+
+getSavedSearchById:
+SELECT *
+FROM saved_searches
+WHERE _id = :id
+LIMIT 1;
+
+insertSavedSearch:
+INSERT INTO saved_searches(source_id, name, query, filters_json)
+VALUES (:sourceId, :name, :query, :filtersJson);
+
+deleteSavedSearch:
+DELETE FROM saved_searches
+WHERE _id = :id;
+
+deleteAllSavedSearchesBySource:
+DELETE FROM saved_searches
+WHERE source_id = :sourceId;

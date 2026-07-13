@@ -1,7 +1,6 @@
 package eu.kanade.presentation.more.settings.screen
 
 import android.app.Activity
-import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
@@ -18,12 +17,10 @@ import eu.kanade.domain.ui.model.ThemeMode
 import eu.kanade.domain.ui.model.setAppCompatDelegateThemeMode
 import eu.kanade.presentation.more.settings.Preference
 import eu.kanade.presentation.more.settings.screen.appearance.AppLanguageScreen
-import eu.kanade.presentation.more.settings.widget.AppThemeModePreferenceWidget
 import eu.kanade.presentation.more.settings.widget.AppThemePreferenceWidget
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableMap
-import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.i18n.MR
 import tachiyomi.i18n.aniyomi.AYMR
 import tachiyomi.presentation.core.i18n.stringResource
@@ -54,11 +51,13 @@ object SettingsAppearanceScreen : SearchableSettings {
     ): Preference.PreferenceGroup {
         val context = LocalContext.current
 
-        val themeModePref = uiPreferences.themeMode()
-        val themeMode by themeModePref.collectAsState()
+        val lightThemePref = uiPreferences.lightTheme()
+        val lightTheme by lightThemePref.collectAsState()
 
-        val appThemePref = uiPreferences.appTheme()
-        val appTheme by appThemePref.collectAsState()
+        val darkThemePref = uiPreferences.darkTheme()
+        val darkTheme by darkThemePref.collectAsState()
+
+        val themeModePref = uiPreferences.themeMode()
 
         val amoledPref = uiPreferences.themeDarkAmoled()
         val amoled by amoledPref.collectAsState()
@@ -67,28 +66,38 @@ object SettingsAppearanceScreen : SearchableSettings {
             title = stringResource(MR.strings.pref_category_theme),
             preferenceItems = persistentListOf(
                 Preference.PreferenceItem.CustomPreference(
-                    title = stringResource(MR.strings.pref_app_theme),
+                    title = stringResource(MR.strings.pref_light_theme),
                 ) {
-                    Column {
-                        AppThemeModePreferenceWidget(
-                            value = themeMode,
-                            onItemClick = {
-                                themeModePref.set(it)
-                                setAppCompatDelegateThemeMode(it)
-                            },
-                        )
-
-                        AppThemePreferenceWidget(
-                            value = appTheme,
-                            amoled = amoled,
-                            onItemClick = { appThemePref.set(it) },
-                        )
-                    }
+                    AppThemePreferenceWidget(
+                        value = lightTheme,
+                        amoled = false,
+                        isDarkTheme = false,
+                        onItemClick = {
+                            lightThemePref.set(it)
+                            themeModePref.set(ThemeMode.LIGHT)
+                            setAppCompatDelegateThemeMode(ThemeMode.LIGHT)
+                            (context as? Activity)?.let { activity -> ActivityCompat.recreate(activity) }
+                        },
+                    )
+                },
+                Preference.PreferenceItem.CustomPreference(
+                    title = stringResource(MR.strings.pref_dark_theme),
+                ) {
+                    AppThemePreferenceWidget(
+                        value = darkTheme,
+                        amoled = amoled,
+                        isDarkTheme = true,
+                        onItemClick = {
+                            darkThemePref.set(it)
+                            themeModePref.set(ThemeMode.DARK)
+                            setAppCompatDelegateThemeMode(ThemeMode.DARK)
+                            (context as? Activity)?.let { activity -> ActivityCompat.recreate(activity) }
+                        },
+                    )
                 },
                 Preference.PreferenceItem.SwitchPreference(
                     preference = amoledPref,
                     title = stringResource(MR.strings.pref_dark_theme_pure_black),
-                    enabled = themeMode != ThemeMode.LIGHT,
                     onValueChanged = {
                         (context as? Activity)?.let { ActivityCompat.recreate(it) }
                         true

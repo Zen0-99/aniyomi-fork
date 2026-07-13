@@ -1,0 +1,19 @@
+CREATE VIEW novellibView AS
+SELECT
+    N.*,
+    coalesce(CS.total, 0) AS totalCount,
+    coalesce(CS.readCount, 0) AS readCount,
+    coalesce(CS.latestUpload, 0) AS latestUpload,
+    coalesce(CS.fetchedAt, 0) AS chapterFetchedAt,
+    coalesce(NH.lastRead, 0) AS lastRead,
+    coalesce(CS.bookmarkCount, 0) AS bookmarkCount,
+    coalesce(NC.category_id, 0) AS category
+FROM novels N
+LEFT JOIN novelchapterstatsView AS CS ON N._id = CS.novel_id
+LEFT JOIN novelhistorystatsView AS NH ON N._id = NH.novel_id
+LEFT JOIN novels_categories AS NC ON NC.novel_id = N._id
+WHERE N.favorite = 1;
+
+novellib:
+SELECT *
+FROM novellibView;

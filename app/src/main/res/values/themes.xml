@@ -649,6 +649,50 @@
         <item name="colorSurfaceContainerHighest">@color/monochrome_surfaceContainerHighest</item>
     </style>
 
+    <!--== Lime Theme ==-->
+    <style name="Theme.Tachiyomi.Lime">
+        <item name="colorPrimary">@color/lime_primary</item>
+        <item name="colorOnPrimary">@color/lime_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/lime_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/lime_onPrimaryContainer</item>
+        <item name="colorPrimaryInverse">@color/lime_inversePrimary</item>
+        <item name="colorSecondary">@color/lime_primary</item>
+        <item name="colorOnSecondary">@color/lime_onPrimary</item>
+        <item name="colorSecondaryContainer">@color/lime_primaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/lime_onPrimaryContainer</item>
+        <item name="android:colorBackground">@color/lime_background</item>
+        <item name="colorOnBackground">@color/lime_onBackground</item>
+        <item name="colorSurface">@color/lime_surface</item>
+        <item name="colorOnSurface">@color/lime_onSurface</item>
+        <item name="colorSurfaceVariant">@color/lime_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/lime_onSurfaceVariant</item>
+        <item name="colorOutline">@color/lime_outline</item>
+        <item name="colorSurfaceInverse">@color/lime_inverseSurface</item>
+        <item name="colorOnSurfaceInverse">@color/lime_inverseOnSurface</item>
+    </style>
+
+    <!--== Doki Theme ==-->
+    <style name="Theme.Tachiyomi.Doki">
+        <item name="colorPrimary">@color/doki_primary</item>
+        <item name="colorOnPrimary">@color/doki_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/doki_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/doki_onPrimaryContainer</item>
+        <item name="colorPrimaryInverse">@color/doki_inversePrimary</item>
+        <item name="colorSecondary">@color/doki_primary</item>
+        <item name="colorOnSecondary">@color/doki_onPrimary</item>
+        <item name="colorSecondaryContainer">@color/doki_primaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/doki_onPrimaryContainer</item>
+        <item name="android:colorBackground">@color/doki_background</item>
+        <item name="colorOnBackground">@color/doki_onBackground</item>
+        <item name="colorSurface">@color/doki_surface</item>
+        <item name="colorOnSurface">@color/doki_onSurface</item>
+        <item name="colorSurfaceVariant">@color/doki_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/doki_onSurfaceVariant</item>
+        <item name="colorOutline">@color/doki_outline</item>
+        <item name="colorSurfaceInverse">@color/doki_inverseSurface</item>
+        <item name="colorOnSurfaceInverse">@color/doki_inverseOnSurface</item>
+    </style>
+
     <!--== AMOLED Mode Overlay ==-->
     <style name="ThemeOverlay.Tachiyomi.Amoled" parent="" />
 

@@ -53,6 +53,8 @@ fun Screen.animeSourcesTab(): TabContent {
                 },
                 onClickPin = screenModel::togglePin,
                 onLongClickItem = screenModel::showSourceDialog,
+                onSwipeHide = screenModel::toggleSource,
+                swipeToHideEnabled = screenModel.swipeToHideSource,
             )
 
             state.dialog?.let { dialog ->

@@ -12,7 +12,7 @@ class CreateAnimeExtensionRepo(
     private val repository: AnimeExtensionRepoRepository,
     private val service: ExtensionRepoService,
 ) {
-    private val repoRegex = """^https://.*/index\.min\.json$""".toRegex()
+    private val repoRegex = """^https://.*$""".toRegex()
 
     suspend fun await(indexUrl: String): Result {
         val formattedIndexUrl = indexUrl.toHttpUrlOrNull()
@@ -20,7 +20,11 @@ class CreateAnimeExtensionRepo(
             ?.takeIf { it.matches(repoRegex) }
             ?: return Result.InvalidUrl
 
-        val baseUrl = formattedIndexUrl.removeSuffix("/index.min.json")
+        val baseUrl = formattedIndexUrl
+            .trim()
+            .trimEnd('/')
+            .removeSuffix("/index.min.json")
+            .removeSuffix("/repo.json")
         return service.fetchRepoDetails(baseUrl)?.let { insert(it) } ?: Result.InvalidUrl
     }
 

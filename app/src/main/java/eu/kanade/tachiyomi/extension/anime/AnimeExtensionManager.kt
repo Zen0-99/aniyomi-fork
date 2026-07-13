@@ -15,12 +15,15 @@ import eu.kanade.tachiyomi.extension.anime.util.AnimeExtensionLoader
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import logcat.LogPriority
@@ -31,6 +34,7 @@ import tachiyomi.i18n.MR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.Locale
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * The manager of anime extensions installed as another apk which extend the available sources. It handles
@@ -253,7 +257,23 @@ class AnimeExtensionManager(
      */
     fun updateExtension(extension: AnimeExtension.Installed): Flow<InstallStep> {
         val availableExt = availableExtensionsMapFlow.value[extension.pkgName] ?: return emptyFlow()
-        return installExtension(availableExt)
+        val pkgName = extension.pkgName
+        return flow {
+            val installFlow = installExtension(availableExt)
+            var installFailed = false
+            installFlow.collect { step ->
+                emit(step)
+                if (step == InstallStep.Error) {
+                    installFailed = true
+                }
+            }
+            if (installFailed) {
+                logcat(LogPriority.WARN) { "Update install failed for $pkgName, attempting uninstall + reinstall" }
+                uninstallExtension(extension)
+                delay(1.seconds)
+                emitAll(installExtension(availableExt))
+            }
+        }
     }
 
     fun cancelInstallUpdateExtension(extension: AnimeExtension) {

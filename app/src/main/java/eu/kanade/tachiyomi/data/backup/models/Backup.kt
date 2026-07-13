@@ -20,6 +20,10 @@ data class LegacyBackup(
     @ProtoNumber(107) var backupAnimeExtensionRepo: List<BackupExtensionRepos> = emptyList(),
     @ProtoNumber(108) var backupMangaExtensionRepo: List<BackupExtensionRepos> = emptyList(),
     @ProtoNumber(109) var backupCustomButton: List<BackupCustomButtons> = emptyList(),
+    // Novel specific values
+    @ProtoNumber(600) var backupNovels: List<BackupNovel> = emptyList(),
+    @ProtoNumber(601) var backupNovelCategories: List<BackupCategory> = emptyList(),
+    @ProtoNumber(602) var backupNovelSources: List<BackupNovelSource> = emptyList(),
 ) {
     fun toBackup(): Backup {
         return Backup(
@@ -37,6 +41,10 @@ data class LegacyBackup(
             backupExtensions = backupExtensions,
             backupAnimeExtensionRepo = backupAnimeExtensionRepo,
             backupCustomButton = backupCustomButton,
+
+            backupNovels = backupNovels,
+            backupNovelCategory = backupNovelCategories,
+            backupNovelSources = backupNovelSources,
         )
     }
 }
@@ -59,4 +67,9 @@ data class Backup(
     @ProtoNumber(504) var backupExtensions: List<BackupExtension> = emptyList(),
     @ProtoNumber(505) var backupAnimeExtensionRepo: List<BackupExtensionRepos> = emptyList(),
     @ProtoNumber(506) var backupCustomButton: List<BackupCustomButtons> = emptyList(),
+
+    // Novel specific values
+    @ProtoNumber(600) val backupNovels: List<BackupNovel> = emptyList(),
+    @ProtoNumber(601) var backupNovelCategory: List<BackupCategory> = emptyList(),
+    @ProtoNumber(602) var backupNovelSources: List<BackupNovelSource> = emptyList(),
 )

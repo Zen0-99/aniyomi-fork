@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Colors for Doki theme - Dark mode
+  ~ Ported from Miko's XML color definitions (dark-only theme)
+-->
+<resources>
+    <color name="doki_primary">#FDE289</color>
+    <color name="doki_onPrimary">#070F2C</color>
+    <color name="doki_primaryContainer">#070F2C</color>
+    <color name="doki_onPrimaryContainer">#FDE289</color>
+    <color name="doki_inversePrimary">#EBBA6C</color>
+    <color name="doki_background">#040716</color>
+    <color name="doki_onBackground">#E3E5E3</color>
+    <color name="doki_surface">#040716</color>
+    <color name="doki_onSurface">#E3E5E3</color>
+    <color name="doki_surfaceVariant">#070F2C</color>
+    <color name="doki_onSurfaceVariant">#C5C6D0</color>
+    <color name="doki_outline">#8E9099</color>
+    <color name="doki_inverseSurface">#E3E5E3</color>
+    <color name="doki_inverseOnSurface">#040716</color>
+</resources>

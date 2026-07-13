@@ -28,6 +28,24 @@ class UiPreferences(
         },
     )
 
+    fun lightTheme() = preferenceStore.getEnum(
+        "pref_light_theme",
+        if (DeviceUtil.isDynamicColorAvailable) {
+            AppTheme.MONET
+        } else {
+            AppTheme.DEFAULT
+        },
+    )
+
+    fun darkTheme() = preferenceStore.getEnum(
+        "pref_dark_theme",
+        if (DeviceUtil.isDynamicColorAvailable) {
+            AppTheme.MONET
+        } else {
+            AppTheme.DEFAULT
+        },
+    )
+
     fun themeDarkAmoled() = preferenceStore.getBoolean("pref_theme_dark_amoled_key", false)
 
     fun relativeTime() = preferenceStore.getBoolean("relative_time_v2", true)

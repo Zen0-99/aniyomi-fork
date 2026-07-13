@@ -229,6 +229,11 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <activity
+            android:name=".extension.novel.util.NovelExtensionInstallActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <activity
             android:name=".ui.setting.track.TrackLoginActivity"
             android:exported="true"
             android:label="@string/track_activity_name">
@@ -259,6 +264,11 @@
 
         <service
             android:name=".extension.anime.util.AnimeExtensionInstallService"
+            android:exported="false"
+            android:foregroundServiceType="shortService" />
+
+        <service
+            android:name=".extension.novel.util.NovelExtensionInstallService"
             android:exported="false"
             android:foregroundServiceType="shortService" />
         <service

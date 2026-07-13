@@ -1,0 +1,8 @@
+CREATE VIEW novelhistorystatsView AS
+SELECT
+    novelchapters.novel_id,
+    max(novelhistory.last_read) AS lastRead
+FROM novelchapters
+JOIN novelhistory
+ON novelchapters._id = novelhistory.chapter_id
+GROUP BY novelchapters.novel_id;

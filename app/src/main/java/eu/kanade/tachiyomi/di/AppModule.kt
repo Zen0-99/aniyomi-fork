@@ -12,6 +12,8 @@ import data.History
 import data.Mangas
 import dataanime.Animehistory
 import dataanime.Animes
+import datanovel.Novelhistory
+import datanovel.Novels
 import eu.kanade.domain.track.anime.store.DelayedAnimeTrackingStore
 import eu.kanade.domain.track.manga.store.DelayedMangaTrackingStore
 import eu.kanade.tachiyomi.BuildConfig
@@ -19,12 +21,16 @@ import eu.kanade.tachiyomi.data.cache.AnimeBackgroundCache
 import eu.kanade.tachiyomi.data.cache.AnimeCoverCache
 import eu.kanade.tachiyomi.data.cache.ChapterCache
 import eu.kanade.tachiyomi.data.cache.MangaCoverCache
+import eu.kanade.tachiyomi.data.cache.NovelCoverCache
 import eu.kanade.tachiyomi.data.download.anime.AnimeDownloadCache
 import eu.kanade.tachiyomi.data.download.anime.AnimeDownloadManager
 import eu.kanade.tachiyomi.data.download.anime.AnimeDownloadProvider
 import eu.kanade.tachiyomi.data.download.manga.MangaDownloadCache
 import eu.kanade.tachiyomi.data.download.manga.MangaDownloadManager
 import eu.kanade.tachiyomi.data.download.manga.MangaDownloadProvider
+import eu.kanade.tachiyomi.data.download.novel.NovelDownloadCache
+import eu.kanade.tachiyomi.data.download.novel.NovelDownloadManager
+import eu.kanade.tachiyomi.data.download.novel.NovelDownloadProvider
 import eu.kanade.tachiyomi.data.saver.ImageSaver
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.extension.anime.AnimeExtensionManager
@@ -33,6 +39,8 @@ import eu.kanade.tachiyomi.network.JavaScriptEngine
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.source.anime.AndroidAnimeSourceManager
 import eu.kanade.tachiyomi.source.manga.AndroidMangaSourceManager
+import eu.kanade.tachiyomi.source.novel.AndroidNovelSourceManager
+import eu.kanade.tachiyomi.extension.novel.NovelExtensionManager
 import eu.kanade.tachiyomi.ui.player.ExternalIntents
 import io.requery.android.database.sqlite.RequerySQLiteOpenHelperFactory
 import kotlinx.serialization.json.Json
@@ -46,15 +54,20 @@ import tachiyomi.data.Database
 import tachiyomi.data.DateColumnAdapter
 import tachiyomi.data.FetchTypeColumnAdapter
 import tachiyomi.data.MangaUpdateStrategyColumnAdapter
+import tachiyomi.data.NovelUpdateStrategyColumnAdapter
 import tachiyomi.data.StringListColumnAdapter
 import tachiyomi.data.handlers.anime.AndroidAnimeDatabaseHandler
 import tachiyomi.data.handlers.anime.AnimeDatabaseHandler
 import tachiyomi.data.handlers.manga.AndroidMangaDatabaseHandler
 import tachiyomi.data.handlers.manga.MangaDatabaseHandler
+import tachiyomi.data.handlers.novel.AndroidNovelDatabaseHandler
+import tachiyomi.data.handlers.novel.NovelDatabaseHandler
 import tachiyomi.domain.source.anime.service.AnimeSourceManager
 import tachiyomi.domain.source.manga.service.MangaSourceManager
+import tachiyomi.domain.source.novel.service.NovelSourceManager
 import tachiyomi.domain.storage.service.StorageManager
 import tachiyomi.mi.data.AnimeDatabase
+import tachiyomi.novel.data.NovelDatabase
 import tachiyomi.source.local.entries.anime.LocalAnimeFetchTypeManager
 import tachiyomi.source.local.image.anime.LocalAnimeBackgroundManager
 import tachiyomi.source.local.image.anime.LocalAnimeCoverManager
@@ -164,6 +177,50 @@ class AppModule(val app: Application) : InjektModule {
             )
         }
 
+        val sqlDriverNovel = AndroidSqliteDriver(
+            schema = NovelDatabase.Schema,
+            context = app,
+            name = "tachiyomi.noveldb",
+            factory = if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                FrameworkSQLiteOpenHelperFactory()
+            } else {
+                RequerySQLiteOpenHelperFactory()
+            },
+            callback = object : AndroidSqliteDriver.Callback(NovelDatabase.Schema) {
+                override fun onOpen(db: SupportSQLiteDatabase) {
+                    super.onOpen(db)
+                    setPragma(db, "foreign_keys = ON")
+                    setPragma(db, "journal_mode = WAL")
+                    setPragma(db, "synchronous = NORMAL")
+                }
+                private fun setPragma(db: SupportSQLiteDatabase, pragma: String) {
+                    val cursor = db.query("PRAGMA $pragma")
+                    cursor.moveToFirst()
+                    cursor.close()
+                }
+            },
+        )
+
+        addSingletonFactory {
+            NovelDatabase(
+                driver = sqlDriverNovel,
+                novelhistoryAdapter = Novelhistory.Adapter(
+                    last_readAdapter = DateColumnAdapter,
+                ),
+                novelsAdapter = Novels.Adapter(
+                    genreAdapter = StringListColumnAdapter,
+                    update_strategyAdapter = NovelUpdateStrategyColumnAdapter,
+                ),
+            )
+        }
+
+        addSingletonFactory<NovelDatabaseHandler> {
+            AndroidNovelDatabaseHandler(
+                get(),
+                sqlDriverNovel,
+            )
+        }
+
         addSingletonFactory {
             Json {
                 ignoreUnknownKeys = true
@@ -190,15 +247,18 @@ class AppModule(val app: Application) : InjektModule {
         addSingletonFactory { MangaCoverCache(app) }
         addSingletonFactory { AnimeCoverCache(app) }
         addSingletonFactory { AnimeBackgroundCache(app) }
+        addSingletonFactory { NovelCoverCache(app) }
 
         addSingletonFactory { NetworkHelper(app, get()) }
         addSingletonFactory { JavaScriptEngine(app) }
 
         addSingletonFactory<MangaSourceManager> { AndroidMangaSourceManager(app, get(), get()) }
         addSingletonFactory<AnimeSourceManager> { AndroidAnimeSourceManager(app, get(), get()) }
+        addSingletonFactory<NovelSourceManager> { AndroidNovelSourceManager(app, get(), get()) }
 
         addSingletonFactory { MangaExtensionManager(app) }
         addSingletonFactory { AnimeExtensionManager(app) }
+        addSingletonFactory { NovelExtensionManager(app) }
 
         addSingletonFactory { MangaDownloadProvider(app) }
         addSingletonFactory { MangaDownloadManager(app) }
@@ -207,6 +267,10 @@ class AppModule(val app: Application) : InjektModule {
         addSingletonFactory { AnimeDownloadProvider(app) }
         addSingletonFactory { AnimeDownloadManager(app) }
         addSingletonFactory { AnimeDownloadCache(app) }
+
+        addSingletonFactory { NovelDownloadProvider(app) }
+        addSingletonFactory { NovelDownloadManager(app) }
+        addSingletonFactory { NovelDownloadCache(app) }
 
         addSingletonFactory { TrackerManager(app) }
         addSingletonFactory { DelayedAnimeTrackingStore(app) }
@@ -228,6 +292,10 @@ class AppModule(val app: Application) : InjektModule {
         addSingletonFactory { StorageManager(app, get()) }
 
         addSingletonFactory { ExternalIntents() }
+
+        addSingletonFactory { eu.kanade.domain.savedsearches.manga.MangaFilterSerializer() }
+        addSingletonFactory { eu.kanade.domain.savedsearches.anime.AnimeFilterSerializer() }
+        addSingletonFactory { eu.kanade.domain.savedsearches.novel.NovelFilterSerializer() }
 
         addSingletonFactory { TorrentServerApi(get(), get()) }
         addSingletonFactory { TorrentServerUtils(get(), get()) }

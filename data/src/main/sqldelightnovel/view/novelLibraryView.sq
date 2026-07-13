@@ -1,0 +1,38 @@
+import eu.kanade.tachiyomi.novelsource.model.NovelUpdateStrategy;
+import kotlin.Boolean;
+import kotlin.String;
+import kotlin.collections.List;
+
+CREATE VIEW novelLibraryView AS
+SELECT
+    N.*,
+    coalesce(C.total, 0) AS totalCount,
+    coalesce(C.readCount, 0) AS readCount,
+    coalesce(C.latestUpload, 0) AS latestUpload,
+    coalesce(C.fetchedAt, 0) AS chapterFetchedAt,
+    coalesce(C.lastRead, 0) AS lastRead,
+    coalesce(C.bookmarkCount, 0) AS bookmarkCount,
+    coalesce(NC.category_id, 0) AS category
+FROM novels N
+LEFT JOIN(
+    SELECT
+        novelchapters.novel_id,
+        count(*) AS total,
+        sum(read) AS readCount,
+        coalesce(max(novelchapters.date_upload), 0) AS latestUpload,
+        coalesce(max(novelhistory.last_read), 0) AS lastRead,
+        coalesce(max(novelchapters.date_fetch), 0) AS fetchedAt,
+        sum(novelchapters.bookmark) AS bookmarkCount
+    FROM novelchapters
+    LEFT JOIN novelhistory
+    ON novelchapters._id = novelhistory.chapter_id
+    GROUP BY novelchapters.novel_id
+) AS C
+ON N._id = C.novel_id
+LEFT JOIN novels_categories AS NC
+ON NC.novel_id = N._id
+WHERE N.favorite = 1;
+
+library:
+SELECT *
+FROM novelLibraryView;

@@ -23,8 +23,11 @@ interface ThemingDelegate {
 class ThemingDelegateImpl : ThemingDelegate {
     override fun applyAppTheme(activity: Activity) {
         val uiPreferences = Injekt.get<UiPreferences>()
+        val isDark = activity.resources.configuration.uiMode and
+            android.content.res.Configuration.UI_MODE_NIGHT_MASK == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val appTheme = if (isDark) uiPreferences.darkTheme().get() else uiPreferences.lightTheme().get()
         ThemingDelegate.getThemeResIds(
-            uiPreferences.appTheme().get(),
+            appTheme,
             uiPreferences.themeDarkAmoled().get(),
         )
             .forEach(activity::setTheme)
@@ -36,6 +39,7 @@ private val themeResources: Map<AppTheme, Int> = mapOf(
     AppTheme.COTTONCANDY to R.style.Theme_Tachiyomi_CottonCandy,
     AppTheme.GREEN_APPLE to R.style.Theme_Tachiyomi_GreenApple,
     AppTheme.LAVENDER to R.style.Theme_Tachiyomi_Lavender,
+    AppTheme.LIME to R.style.Theme_Tachiyomi_Lime,
     AppTheme.MIDNIGHT_DUSK to R.style.Theme_Tachiyomi_MidnightDusk,
     AppTheme.MONOCHROME to R.style.Theme_Tachiyomi_Monochrome,
     AppTheme.MOCHA to R.style.Theme_Tachiyomi_Mocha,
@@ -50,4 +54,5 @@ private val themeResources: Map<AppTheme, Int> = mapOf(
     AppTheme.DOOM to R.style.Theme_Tachiyomi_Doom,
     AppTheme.MATRIX to R.style.Theme_Tachiyomi_Matrix,
     AppTheme.TIDAL_WAVE to R.style.Theme_Tachiyomi_TidalWave,
+    AppTheme.DOKI to R.style.Theme_Tachiyomi_Doki,
 )

@@ -21,6 +21,9 @@ import eu.kanade.tachiyomi.ui.history.anime.animeHistoryTab
 import eu.kanade.tachiyomi.ui.history.anime.resumeLastEpisodeSeenEvent
 import eu.kanade.tachiyomi.ui.history.manga.MangaHistoryScreenModel
 import eu.kanade.tachiyomi.ui.history.manga.mangaHistoryTab
+import eu.kanade.tachiyomi.ui.history.novel.NovelHistoryScreenModel
+import eu.kanade.tachiyomi.ui.history.novel.novelHistoryTab
+import eu.kanade.tachiyomi.ui.history.novel.resumeLastNovelChapterReadEvent
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import kotlinx.collections.immutable.persistentListOf
 import tachiyomi.i18n.MR
@@ -47,6 +50,7 @@ data object HistoriesTab : Tab {
 
     override suspend fun onReselect(navigator: Navigator) {
         resumeLastEpisodeSeenEvent.send(Unit)
+        resumeLastNovelChapterReadEvent.send(Unit)
     }
 
     @Composable
@@ -60,16 +64,22 @@ data object HistoriesTab : Tab {
         val animeHistoryScreenModel = rememberScreenModel { AnimeHistoryScreenModel() }
         val animeSearchQuery by animeHistoryScreenModel.query.collectAsState()
 
+        val novelHistoryScreenModel = rememberScreenModel { NovelHistoryScreenModel() }
+        val novelSearchQuery by novelHistoryScreenModel.query.collectAsState()
+
         TabbedScreen(
             titleRes = MR.strings.label_recent_manga,
             tabs = persistentListOf(
                 animeHistoryTab(context, fromMore),
                 mangaHistoryTab(context, fromMore),
+                novelHistoryTab(context, fromMore),
             ),
             mangaSearchQuery = mangaSearchQuery,
             onChangeMangaSearchQuery = mangaHistoryScreenModel::search,
             animeSearchQuery = animeSearchQuery,
             onChangeAnimeSearchQuery = animeHistoryScreenModel::search,
+            novelSearchQuery = novelSearchQuery,
+            onChangeNovelSearchQuery = novelHistoryScreenModel::search,
         )
 
         LaunchedEffect(Unit) {
@@ -80,3 +90,4 @@ data object HistoriesTab : Tab {
 
 private const val TAB_ANIME = 0
 private const val TAB_MANGA = 1
+private const val TAB_NOVEL = 2

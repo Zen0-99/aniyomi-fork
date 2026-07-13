@@ -1,0 +1,10 @@
+CREATE VIEW novelchapterstatsView AS
+SELECT
+    novelchapters.novel_id,
+    count(*) AS total,
+    sum(read) AS readCount,
+    sum(bookmark) AS bookmarkCount,
+    max(date_upload) AS latestUpload,
+    max(date_fetch) AS fetchedAt
+FROM novelchapters
+GROUP BY novelchapters.novel_id;

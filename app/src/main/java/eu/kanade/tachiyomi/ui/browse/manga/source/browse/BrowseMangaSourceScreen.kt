@@ -44,6 +44,7 @@ import eu.kanade.presentation.browse.manga.MissingSourceScreen
 import eu.kanade.presentation.browse.manga.components.BrowseMangaSourceToolbar
 import eu.kanade.presentation.category.components.ChangeCategoryDialog
 import eu.kanade.presentation.entries.manga.DuplicateMangaDialog
+import eu.kanade.presentation.more.components.SavedSearchesDialog
 import eu.kanade.presentation.util.AssistContentScreen
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.core.common.Constants
@@ -209,6 +210,15 @@ data class BrowseMangaSourceScreen(
                                 },
                             )
                         }
+                        if (state.isUserQuery || state.filters.isNotEmpty()) {
+                            FilterChip(
+                                selected = false,
+                                onClick = screenModel::openSavedSearches,
+                                label = {
+                                    Text(text = stringResource(MR.strings.saved_searches))
+                                },
+                            )
+                        }
                     }
 
                     HorizontalDivider()
@@ -259,6 +269,16 @@ data class BrowseMangaSourceScreen(
                     onReset = screenModel::resetFilters,
                     onFilter = { screenModel.search(filters = state.filters) },
                     onUpdate = screenModel::setFilters,
+                )
+            }
+            is BrowseMangaSourceScreenModel.Dialog.SavedSearches -> {
+                val savedSearches by screenModel.savedSearchesFlow.collectAsState()
+                SavedSearchesDialog(
+                    onDismissRequest = onDismissRequest,
+                    savedSearches = savedSearches,
+                    onSaveSearch = screenModel::saveSearch,
+                    onApplySearch = screenModel::applySavedSearch,
+                    onDeleteSearch = screenModel::deleteSavedSearch,
                 )
             }
             is BrowseMangaSourceScreenModel.Dialog.AddDuplicateManga -> {

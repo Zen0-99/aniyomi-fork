@@ -1,5 +1,7 @@
 package eu.kanade.presentation.theme
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.ColorScheme
@@ -14,9 +16,11 @@ import eu.kanade.domain.ui.model.AppTheme
 import eu.kanade.presentation.theme.colorscheme.BaseColorScheme
 import eu.kanade.presentation.theme.colorscheme.CloudflareColorScheme
 import eu.kanade.presentation.theme.colorscheme.CottoncandyColorScheme
+import eu.kanade.presentation.theme.colorscheme.DokiColorScheme
 import eu.kanade.presentation.theme.colorscheme.DoomColorScheme
 import eu.kanade.presentation.theme.colorscheme.GreenAppleColorScheme
 import eu.kanade.presentation.theme.colorscheme.LavenderColorScheme
+import eu.kanade.presentation.theme.colorscheme.LimeColorScheme
 import eu.kanade.presentation.theme.colorscheme.MatrixColorScheme
 import eu.kanade.presentation.theme.colorscheme.MidnightDuskColorScheme
 import eu.kanade.presentation.theme.colorscheme.MochaColorScheme
@@ -41,9 +45,30 @@ fun TachiyomiTheme(
     content: @Composable () -> Unit,
 ) {
     val uiPreferences = Injekt.get<UiPreferences>()
+    val isDark = isSystemInDarkTheme()
+    val resolvedTheme = appTheme
+        ?: if (isDark) uiPreferences.darkTheme().get() else uiPreferences.lightTheme().get()
     BaseTachiyomiTheme(
-        appTheme = appTheme ?: uiPreferences.appTheme().get(),
+        appTheme = resolvedTheme,
         isAmoled = amoled ?: uiPreferences.themeDarkAmoled().get(),
+        isDark = isDark,
+        content = content,
+    )
+}
+
+@Composable
+fun TachiyomiTheme(
+    appTheme: AppTheme,
+    amoled: Boolean,
+    isDark: Boolean,
+    animate: Boolean = true,
+    content: @Composable () -> Unit,
+) {
+    BaseTachiyomiTheme(
+        appTheme = appTheme,
+        isAmoled = amoled,
+        isDark = isDark,
+        animate = animate,
         content = content,
     )
 }
@@ -53,17 +78,72 @@ fun TachiyomiPreviewTheme(
     appTheme: AppTheme = AppTheme.DEFAULT,
     isAmoled: Boolean = false,
     content: @Composable () -> Unit,
-) = BaseTachiyomiTheme(appTheme, isAmoled, content)
+) = BaseTachiyomiTheme(
+    appTheme = appTheme,
+    isAmoled = isAmoled,
+    isDark = isSystemInDarkTheme(),
+    content = content,
+)
 
 @Composable
 private fun BaseTachiyomiTheme(
     appTheme: AppTheme,
     isAmoled: Boolean,
+    isDark: Boolean,
+    animate: Boolean = true,
     content: @Composable () -> Unit,
 ) {
+    val targetScheme = getThemeColorScheme(appTheme, isAmoled, isDark)
+    val colorScheme = if (animate) targetScheme.animateColors() else targetScheme
     MaterialTheme(
-        colorScheme = getThemeColorScheme(appTheme, isAmoled),
+        colorScheme = colorScheme,
         content = content,
+    )
+}
+
+private const val THEME_ANIMATION_DURATION_MS = 300
+
+@Composable
+private fun ColorScheme.animateColors(): ColorScheme {
+    val spec = tween<Color>(durationMillis = THEME_ANIMATION_DURATION_MS)
+
+    @Composable
+    fun anim(target: Color) = animateColorAsState(
+        targetValue = target,
+        animationSpec = spec,
+        label = "themeColor",
+    ).value
+
+    return copy(
+        primary = anim(primary),
+        onPrimary = anim(onPrimary),
+        primaryContainer = anim(primaryContainer),
+        onPrimaryContainer = anim(onPrimaryContainer),
+        inversePrimary = anim(inversePrimary),
+        secondary = anim(secondary),
+        onSecondary = anim(onSecondary),
+        secondaryContainer = anim(secondaryContainer),
+        onSecondaryContainer = anim(onSecondaryContainer),
+        tertiary = anim(tertiary),
+        onTertiary = anim(onTertiary),
+        tertiaryContainer = anim(tertiaryContainer),
+        onTertiaryContainer = anim(onTertiaryContainer),
+        background = anim(background),
+        onBackground = anim(onBackground),
+        surface = anim(surface),
+        onSurface = anim(onSurface),
+        surfaceVariant = anim(surfaceVariant),
+        onSurfaceVariant = anim(onSurfaceVariant),
+        surfaceTint = anim(surfaceTint),
+        inverseSurface = anim(inverseSurface),
+        inverseOnSurface = anim(inverseOnSurface),
+        error = anim(error),
+        onError = anim(onError),
+        errorContainer = anim(errorContainer),
+        onErrorContainer = anim(onErrorContainer),
+        outline = anim(outline),
+        outlineVariant = anim(outlineVariant),
+        scrim = anim(scrim),
     )
 }
 
@@ -72,15 +152,15 @@ private fun BaseTachiyomiTheme(
 private fun getThemeColorScheme(
     appTheme: AppTheme,
     isAmoled: Boolean,
+    isDark: Boolean,
 ): ColorScheme {
-    val uiPreferences = Injekt.get<UiPreferences>()
     val colorScheme = if (appTheme == AppTheme.MONET) {
         MonetColorScheme(LocalContext.current)
     } else {
         colorSchemes.getOrDefault(appTheme, TachiyomiColorScheme)
     }
     return colorScheme.getColorScheme(
-        isSystemInDarkTheme(),
+        isDark,
         isAmoled,
     )
 }
@@ -108,6 +188,7 @@ private val colorSchemes: Map<AppTheme, BaseColorScheme> = mapOf(
     AppTheme.DOOM to DoomColorScheme,
     AppTheme.GREEN_APPLE to GreenAppleColorScheme,
     AppTheme.LAVENDER to LavenderColorScheme,
+    AppTheme.LIME to LimeColorScheme,
     AppTheme.MATRIX to MatrixColorScheme,
     AppTheme.MIDNIGHT_DUSK to MidnightDuskColorScheme,
     AppTheme.MONOCHROME to MonochromeColorScheme,
@@ -120,4 +201,5 @@ private val colorSchemes: Map<AppTheme, BaseColorScheme> = mapOf(
     AppTheme.TIDAL_WAVE to TidalWaveColorScheme,
     AppTheme.YINYANG to YinYangColorScheme,
     AppTheme.YOTSUBA to YotsubaColorScheme,
+    AppTheme.DOKI to DokiColorScheme,
 )

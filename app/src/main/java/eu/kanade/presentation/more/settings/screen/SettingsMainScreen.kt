@@ -14,6 +14,7 @@ import androidx.compose.material.icons.outlined.CollectionsBookmark
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.GetApp
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Security
@@ -189,13 +190,19 @@ object SettingsMainScreen : Screen() {
             screen = SettingsLibraryScreen,
         ),
         Item(
-            titleRes = MR.strings.pref_category_reader,
+            titleRes = AYMR.strings.pref_category_manga_reader,
             subtitleRes = MR.strings.pref_reader_summary,
             icon = Icons.AutoMirrored.Outlined.ChromeReaderMode,
             screen = SettingsReaderScreen,
         ),
         Item(
-            titleRes = AYMR.strings.label_player,
+            titleRes = AYMR.strings.pref_category_novel_reader,
+            formatSubtitle = { "Novel reader settings" },
+            icon = Icons.Outlined.MenuBook,
+            screen = SettingsNovelReaderScreen,
+        ),
+        Item(
+            titleRes = AYMR.strings.pref_category_anime_player,
             subtitleRes = AYMR.strings.pref_player_settings_summary,
             icon = Icons.Outlined.VideoSettings,
             screen = PlayerSettingsScreen(mainSettings = true),

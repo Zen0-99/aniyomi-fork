@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Colors for Lime theme (Flat Lime / Lime Time)
+  ~ Ported from Miko's XML color definitions
+-->
+<resources>
+    <color name="lime_primary">#57BD79</color>
+    <color name="lime_onPrimary">#ffffff</color>
+    <color name="lime_primaryContainer">#D9ECE0</color>
+    <color name="lime_onPrimaryContainer">#043314</color>
+    <color name="lime_inversePrimary">#AEDFC0</color>
+    <color name="lime_background">#E9EFEB</color>
+    <color name="lime_onBackground">#1B1B1E</color>
+    <color name="lime_surface">#E9EFEB</color>
+    <color name="lime_onSurface">#1B1B1E</color>
+    <color name="lime_surfaceVariant">#D9ECE0</color>
+    <color name="lime_onSurfaceVariant">#44464E</color>
+    <color name="lime_outline">#757780</color>
+    <color name="lime_inverseSurface">#303033</color>
+    <color name="lime_inverseOnSurface">#F2F0F4</color>
+</resources>

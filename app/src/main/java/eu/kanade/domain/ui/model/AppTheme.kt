@@ -12,6 +12,7 @@ enum class AppTheme(val titleRes: StringResource?) {
     DOOM(AYMR.strings.theme_doom),
     GREEN_APPLE(MR.strings.theme_greenapple),
     LAVENDER(MR.strings.theme_lavender),
+    LIME(AYMR.strings.theme_lime),
     MATRIX(AYMR.strings.theme_matrix),
     MIDNIGHT_DUSK(MR.strings.theme_midnightdusk),
     MOCHA(AYMR.strings.theme_mocha),
@@ -23,6 +24,7 @@ enum class AppTheme(val titleRes: StringResource?) {
     TIDAL_WAVE(MR.strings.theme_tidalwave),
     YINYANG(MR.strings.theme_yinyang),
     YOTSUBA(MR.strings.theme_yotsuba),
+    DOKI(AYMR.strings.theme_doki),
     MONOCHROME(MR.strings.theme_monochrome),
 
     // Deprecated

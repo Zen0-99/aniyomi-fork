@@ -1,0 +1,10 @@
+CREATE VIEW noveldeletableView AS
+SELECT
+    N._id,
+    N.source
+FROM novels AS N
+WHERE N.favorite = 0;
+
+getDeletableNovels:
+SELECT *
+FROM noveldeletableView;

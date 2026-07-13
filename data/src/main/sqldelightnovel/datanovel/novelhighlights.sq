@@ -1,0 +1,59 @@
+CREATE TABLE novelhighlights(
+    _id INTEGER NOT NULL PRIMARY KEY,
+    novel_id INTEGER NOT NULL,
+    chapter_id INTEGER NOT NULL,
+    selected_text TEXT NOT NULL,
+    color TEXT,
+    note TEXT,
+    paragraph_index INTEGER NOT NULL DEFAULT 0,
+    timestamp INTEGER NOT NULL,
+    FOREIGN KEY(novel_id) REFERENCES novels (_id)
+    ON DELETE CASCADE,
+    FOREIGN KEY(chapter_id) REFERENCES novelchapters (_id)
+    ON DELETE CASCADE
+);
+
+CREATE INDEX novelhighlights_novel_id_index ON novelhighlights(novel_id);
+CREATE INDEX novelhighlights_chapter_id_index ON novelhighlights(chapter_id);
+
+getHighlightsByNovelId:
+SELECT *
+FROM novelhighlights
+WHERE novel_id = :novelId
+ORDER BY timestamp DESC;
+
+getHighlightsByChapterId:
+SELECT *
+FROM novelhighlights
+WHERE chapter_id = :chapterId
+ORDER BY timestamp DESC;
+
+getAllHighlights:
+SELECT *
+FROM novelhighlights
+ORDER BY timestamp DESC;
+
+getHighlightCount:
+SELECT count(*)
+FROM novelhighlights
+WHERE novel_id = :novelId;
+
+insert:
+INSERT INTO novelhighlights(novel_id, chapter_id, selected_text, color, note, paragraph_index, timestamp)
+VALUES (:novelId, :chapterId, :selectedText, :color, :note, :paragraphIndex, :timestamp);
+
+deleteHighlight:
+DELETE FROM novelhighlights
+WHERE _id = :highlightId;
+
+deleteAllHighlightsByNovelId:
+DELETE FROM novelhighlights
+WHERE novel_id = :novelId;
+
+updateNote:
+UPDATE novelhighlights
+SET note = :note
+WHERE _id = :highlightId;
+
+selectLastInsertedRowId:
+SELECT last_insert_rowid();

@@ -16,6 +16,7 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.core.preference.asState
 import eu.kanade.domain.entries.manga.interactor.UpdateManga
 import eu.kanade.domain.entries.manga.model.toDomainManga
+import eu.kanade.domain.savedsearches.manga.MangaFilterSerializer
 import eu.kanade.domain.source.manga.interactor.GetMangaIncognitoState
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.domain.track.manga.interactor.AddMangaTracks
@@ -50,6 +51,10 @@ import tachiyomi.domain.items.chapter.interactor.SetMangaDefaultChapterFlags
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.source.manga.interactor.GetRemoteManga
 import tachiyomi.domain.source.manga.service.MangaSourceManager
+import tachiyomi.domain.savedsearches.manga.interactor.DeleteMangaSavedSearch
+import tachiyomi.domain.savedsearches.manga.interactor.GetMangaSavedSearches
+import tachiyomi.domain.savedsearches.manga.interactor.InsertMangaSavedSearch
+import tachiyomi.domain.savedsearches.model.SavedSearch
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.time.Instant
@@ -72,11 +77,18 @@ class BrowseMangaSourceScreenModel(
     private val updateManga: UpdateManga = Injekt.get(),
     private val addTracks: AddMangaTracks = Injekt.get(),
     private val getIncognitoState: GetMangaIncognitoState = Injekt.get(),
+    private val getSavedSearches: GetMangaSavedSearches = Injekt.get(),
+    private val insertSavedSearch: InsertMangaSavedSearch = Injekt.get(),
+    private val deleteSavedSearch: DeleteMangaSavedSearch = Injekt.get(),
+    private val filterSerializer: MangaFilterSerializer = Injekt.get(),
 ) : StateScreenModel<BrowseMangaSourceScreenModel.State>(State(Listing.valueOf(listingQuery))) {
 
     var displayMode by sourcePreferences.sourceDisplayMode().asState(screenModelScope)
 
     val source = sourceManager.getOrStub(sourceId)
+
+    val savedSearchesFlow = getSavedSearches.subscribe(sourceId)
+        .stateIn(ioCoroutineScope, SharingStarted.Lazily, emptyList())
 
     init {
         if (source is CatalogueSource) {
@@ -320,6 +332,31 @@ class BrowseMangaSourceScreenModel(
         setDialog(Dialog.Filter)
     }
 
+    fun openSavedSearches() {
+        setDialog(Dialog.SavedSearches)
+    }
+
+    fun saveSearch(name: String) {
+        val query = state.value.toolbarQuery ?: ""
+        val filtersJson = filterSerializer.encode(state.value.filters)
+        screenModelScope.launchIO {
+            insertSavedSearch.await(SavedSearch.create(sourceId, name, query, filtersJson))
+        }
+    }
+
+    fun deleteSavedSearch(id: Long) {
+        screenModelScope.launchIO {
+            deleteSavedSearch.await(id)
+        }
+    }
+
+    fun applySavedSearch(savedSearch: SavedSearch) {
+        if (source !is CatalogueSource) return
+        val filters = filterSerializer.decode(source.getFilterList(), savedSearch.filtersJson)
+        search(query = savedSearch.query, filters = filters)
+        setDialog(null)
+    }
+
     fun setDialog(dialog: Dialog?) {
         mutableState.update { it.copy(dialog = dialog) }
     }
@@ -349,6 +386,7 @@ class BrowseMangaSourceScreenModel(
 
     sealed interface Dialog {
         data object Filter : Dialog
+        data object SavedSearches : Dialog
         data class RemoveManga(val manga: Manga) : Dialog
         data class AddDuplicateManga(val manga: Manga, val duplicate: Manga) : Dialog
         data class ChangeMangaCategory(

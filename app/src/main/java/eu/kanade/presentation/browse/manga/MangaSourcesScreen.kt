@@ -14,8 +14,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -46,6 +49,8 @@ fun MangaSourcesScreen(
     onClickItem: (Source, Listing) -> Unit,
     onClickPin: (Source) -> Unit,
     onLongClickItem: (Source) -> Unit,
+    onSwipeHide: (Source) -> Unit,
+    swipeToHideEnabled: Boolean,
 ) {
     when {
         state.isLoading -> LoadingScreen(Modifier.padding(contentPadding))
@@ -85,6 +90,8 @@ fun MangaSourcesScreen(
                             onClickItem = onClickItem,
                             onLongClickItem = onLongClickItem,
                             onClickPin = onClickPin,
+                            onSwipeHide = onSwipeHide,
+                            swipeToHideEnabled = swipeToHideEnabled,
                         )
                     }
                 }
@@ -116,30 +123,57 @@ private fun SourceItem(
     onClickItem: (Source, Listing) -> Unit,
     onLongClickItem: (Source) -> Unit,
     onClickPin: (Source) -> Unit,
+    onSwipeHide: (Source) -> Unit,
+    swipeToHideEnabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    BaseMangaSourceItem(
-        modifier = modifier,
-        source = source,
-        onClickItem = { onClickItem(source, Listing.Popular) },
-        onLongClickItem = { onLongClickItem(source) },
-        action = {
-            if (source.supportsLatest) {
-                TextButton(onClick = { onClickItem(source, Listing.Latest) }) {
-                    Text(
-                        text = stringResource(MR.strings.latest),
-                        style = LocalTextStyle.current.copy(
-                            color = MaterialTheme.colorScheme.primary,
-                        ),
-                    )
-                }
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = {
+            if (it == SwipeToDismissBoxValue.EndToStart) {
+                onSwipeHide(source)
+                true
+            } else {
+                false
             }
-            SourcePinButton(
-                isPinned = Pin.Pinned in source.pin,
-                onClick = { onClickPin(source) },
-            )
         },
+        positionalThreshold = { distance -> distance * 0.5f },
     )
+
+    val content: @Composable () -> Unit = {
+        BaseMangaSourceItem(
+            modifier = Modifier,
+            source = source,
+            onClickItem = { onClickItem(source, Listing.Popular) },
+            onLongClickItem = { onLongClickItem(source) },
+            action = {
+                if (source.supportsLatest) {
+                    TextButton(onClick = { onClickItem(source, Listing.Latest) }) {
+                        Text(
+                            text = stringResource(MR.strings.latest),
+                            style = LocalTextStyle.current.copy(
+                                color = MaterialTheme.colorScheme.primary,
+                            ),
+                        )
+                    }
+                }
+                SourcePinButton(
+                    isPinned = Pin.Pinned in source.pin,
+                    onClick = { onClickPin(source) },
+                )
+            },
+        )
+    }
+
+    if (swipeToHideEnabled && source.id != LocalMangaSource.ID) {
+        SwipeToDismissBox(
+            state = dismissState,
+            backgroundContent = {},
+            modifier = modifier,
+            content = { content() },
+        )
+    } else {
+        content()
+    }
 }
 
 @Composable

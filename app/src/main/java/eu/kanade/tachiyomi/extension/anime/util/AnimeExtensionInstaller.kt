@@ -32,6 +32,7 @@ import tachiyomi.core.common.util.system.logcat
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.File
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -106,7 +107,14 @@ internal class AnimeExtensionInstaller(private val context: Context) {
             }
         }
 
-        return merge(downloadStateFlow, pollStatusFlow).transformWhile {
+        // Timeout flow: emit Error after 5 minutes to prevent stuck installs
+        val timeoutFlow = flow {
+            delay(5.minutes)
+            logcat(LogPriority.ERROR) { "Install flow timed out for $pkgName after 5 minutes" }
+            emit(InstallStep.Error)
+        }
+
+        return merge(downloadStateFlow, pollStatusFlow, timeoutFlow).transformWhile {
             emit(it)
             // Stop when the application is installed or errors
             !it.isCompleted()
@@ -313,7 +321,14 @@ internal class AnimeExtensionInstaller(private val context: Context) {
                         cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI),
                     ).removePrefix(FILE_SCHEME)
 
+                    // Mark as Installing before attempting install, so the flow doesn't stay stuck
+                    // at Downloading if the install activity result is lost
+                    updateInstallStep(id, InstallStep.Installing)
+                    logcat(LogPriority.DEBUG) { "Download complete, starting install for downloadId=$id" }
                     installApk(id, File(localUri).getUriCompat(context))
+                } else {
+                    logcat(LogPriority.ERROR) { "Download cursor empty for downloadId=$id" }
+                    updateInstallStep(id, InstallStep.Error)
                 }
             }
         }

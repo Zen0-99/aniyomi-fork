@@ -15,11 +15,11 @@ internal abstract class BaseColorScheme {
     private val surfaceContainerHighest = Color(0xFF1B1B1B)
 
     fun getColorScheme(isDark: Boolean, isAmoled: Boolean): ColorScheme {
-        if (!isDark) return lightScheme
+        if (!isDark) return lightScheme.withSingleAccent()
 
-        if (!isAmoled) return darkScheme
+        if (!isAmoled) return darkScheme.withSingleAccent()
 
-        return darkScheme.copy(
+        return darkScheme.withSingleAccent().copy(
             background = Color.Black,
             onBackground = Color.White,
             surface = Color.Black,
@@ -32,4 +32,11 @@ internal abstract class BaseColorScheme {
             surfaceContainerHighest = surfaceContainerHighest,
         )
     }
+
+    private fun ColorScheme.withSingleAccent(): ColorScheme = copy(
+        secondary = primary,
+        onSecondary = onPrimary,
+        secondaryContainer = primaryContainer,
+        onSecondaryContainer = onPrimaryContainer,
+    )
 }

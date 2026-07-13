@@ -66,6 +66,9 @@ import eu.kanade.tachiyomi.ui.download.anime.animeDownloadTab
 import eu.kanade.tachiyomi.ui.download.manga.MangaDownloadHeaderItem
 import eu.kanade.tachiyomi.ui.download.manga.MangaDownloadQueueScreenModel
 import eu.kanade.tachiyomi.ui.download.manga.mangaDownloadTab
+import eu.kanade.tachiyomi.ui.download.novel.NovelDownloadHeaderItem
+import eu.kanade.tachiyomi.ui.download.novel.NovelDownloadQueueScreenModel
+import eu.kanade.tachiyomi.ui.download.novel.novelDownloadTab
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
 import tachiyomi.i18n.MR
@@ -95,16 +98,21 @@ data object DownloadsTab : Tab {
         val scope = rememberCoroutineScope()
         val animeScreenModel = rememberScreenModel { AnimeDownloadQueueScreenModel() }
         val mangaScreenModel = rememberScreenModel { MangaDownloadQueueScreenModel() }
+        val novelScreenModel = rememberScreenModel { NovelDownloadQueueScreenModel() }
         val animeDownloadList by animeScreenModel.state.collectAsState()
         val mangaDownloadList by mangaScreenModel.state.collectAsState()
+        val novelDownloadList by novelScreenModel.state.collectAsState()
         val animeDownloadCount by remember {
             derivedStateOf { animeDownloadList.sumOf { it.subItems.size } }
         }
         val mangaDownloadCount by remember {
             derivedStateOf { mangaDownloadList.sumOf { it.subItems.size } }
         }
+        val novelDownloadCount by remember {
+            derivedStateOf { novelDownloadList.sumOf { it.subItems.size } }
+        }
 
-        val state = rememberPagerState { 2 }
+        val state = rememberPagerState { 3 }
         val snackbarHostState = remember { SnackbarHostState() }
 
         val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
@@ -159,6 +167,7 @@ data object DownloadsTab : Tab {
                         when (state.currentPage) {
                             0 -> AnimeActions(animeScreenModel, animeDownloadList)
                             1 -> MangaActions(mangaScreenModel, mangaDownloadList)
+                            2 -> NovelActions(novelScreenModel, novelDownloadList)
                         }
                     },
                     scrollBehavior = scrollBehavior,
@@ -169,6 +178,7 @@ data object DownloadsTab : Tab {
                     visible = when (state.currentPage) {
                         0 -> animeDownloadList.isNotEmpty()
                         1 -> mangaDownloadList.isNotEmpty()
+                        2 -> novelDownloadList.isNotEmpty()
                         else -> false
                     },
                     enter = fadeIn(),
@@ -176,6 +186,7 @@ data object DownloadsTab : Tab {
                 ) {
                     val animeIsRunning by animeScreenModel.isDownloaderRunning.collectAsState()
                     val mangaIsRunning by mangaScreenModel.isDownloaderRunning.collectAsState()
+                    val novelIsRunning by novelScreenModel.isDownloaderRunning.collectAsState()
                     ExtendedFloatingActionButton(
                         text = {
                             val id = when (state.currentPage) {
@@ -185,6 +196,11 @@ data object DownloadsTab : Tab {
                                     AYMR.strings.action_continue
                                 }
                                 1 -> if (mangaIsRunning) {
+                                    MR.strings.action_pause
+                                } else {
+                                    MR.strings.action_resume
+                                }
+                                2 -> if (novelIsRunning) {
                                     MR.strings.action_pause
                                 } else {
                                     MR.strings.action_resume
@@ -205,6 +221,11 @@ data object DownloadsTab : Tab {
                                 } else {
                                     Icons.Filled.PlayArrow
                                 }
+                                2 -> if (novelIsRunning) {
+                                    Icons.Outlined.Pause
+                                } else {
+                                    Icons.Filled.PlayArrow
+                                }
                                 else -> Icons.Filled.PlayArrow
                             }
                             Icon(imageVector = icon, contentDescription = null)
@@ -221,6 +242,12 @@ data object DownloadsTab : Tab {
                                     mangaScreenModel.pauseDownloads()
                                 } else {
                                     mangaScreenModel.startDownloads()
+                                }
+
+                                2 -> if (novelIsRunning) {
+                                    novelScreenModel.pauseDownloads()
+                                } else {
+                                    novelScreenModel.startDownloads()
                                 }
                             }
                         },
@@ -263,6 +290,17 @@ data object DownloadsTab : Tab {
                             },
                             unselectedContentColor = MaterialTheme.colorScheme.onSurface,
                         ),
+                        Tab(
+                            selected = state.currentPage == 2,
+                            onClick = { scope.launch { state.animateScrollToPage(2) } },
+                            text = {
+                                TabText(
+                                    text = stringResource(AYMR.strings.label_novel),
+                                    badgeCount = novelDownloadCount,
+                                )
+                            },
+                            unselectedContentColor = MaterialTheme.colorScheme.onSurface,
+                        ),
                     )
                 }
 
@@ -280,6 +318,12 @@ data object DownloadsTab : Tab {
                             snackbarHostState,
                         )
                         1 -> mangaDownloadTab(
+                            nestedScrollConnection,
+                        ).content(
+                            PaddingValues(bottom = contentPadding.calculateBottomPadding()),
+                            snackbarHostState,
+                        )
+                        2 -> novelDownloadTab(
                             nestedScrollConnection,
                         ).content(
                             PaddingValues(bottom = contentPadding.calculateBottomPadding()),
@@ -453,6 +497,90 @@ data object DownloadsTab : Tab {
                     AppBar.OverflowAction(
                         title = stringResource(MR.strings.action_cancel_all),
                         onClick = { mangaScreenModel.clearQueue() },
+                    ),
+                ),
+            )
+        }
+    }
+
+    @Composable
+    private fun NovelActions(
+        novelScreenModel: NovelDownloadQueueScreenModel,
+        novelDownloadList: List<NovelDownloadHeaderItem>,
+    ) {
+        if (novelDownloadList.isNotEmpty()) {
+            var sortExpanded by remember { mutableStateOf(false) }
+            val onDismissRequest = { sortExpanded = false }
+            DropdownMenu(
+                expanded = sortExpanded,
+                onDismissRequest = onDismissRequest,
+            ) {
+                NestedMenuItem(
+                    text = { Text(text = stringResource(MR.strings.action_order_by_upload_date)) },
+                    children = { closeMenu ->
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(MR.strings.action_newest)) },
+                            onClick = {
+                                novelScreenModel.reorderQueue(
+                                    { it.download.chapter.dateUpload },
+                                    true,
+                                )
+                                closeMenu()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(MR.strings.action_oldest)) },
+                            onClick = {
+                                novelScreenModel.reorderQueue(
+                                    { it.download.chapter.dateUpload },
+                                    false,
+                                )
+                                closeMenu()
+                            },
+                        )
+                    },
+                )
+                NestedMenuItem(
+                    text = {
+                        Text(
+                            text = stringResource(MR.strings.action_order_by_chapter_number),
+                        )
+                    },
+                    children = { closeMenu ->
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(MR.strings.action_asc)) },
+                            onClick = {
+                                novelScreenModel.reorderQueue(
+                                    { it.download.chapter.chapterNumber },
+                                    false,
+                                )
+                                closeMenu()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(MR.strings.action_desc)) },
+                            onClick = {
+                                novelScreenModel.reorderQueue(
+                                    { it.download.chapter.chapterNumber },
+                                    true,
+                                )
+                                closeMenu()
+                            },
+                        )
+                    },
+                )
+            }
+
+            AppBarActions(
+                persistentListOf(
+                    AppBar.Action(
+                        title = stringResource(MR.strings.action_sort),
+                        icon = Icons.AutoMirrored.Outlined.Sort,
+                        onClick = { sortExpanded = true },
+                    ),
+                    AppBar.OverflowAction(
+                        title = stringResource(MR.strings.action_cancel_all),
+                        onClick = { novelScreenModel.clearQueue() },
                     ),
                 ),
             )

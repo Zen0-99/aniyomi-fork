@@ -44,6 +44,7 @@ import eu.kanade.presentation.browse.anime.MissingSourceScreen
 import eu.kanade.presentation.browse.anime.components.BrowseAnimeSourceToolbar
 import eu.kanade.presentation.category.components.ChangeCategoryDialog
 import eu.kanade.presentation.entries.anime.DuplicateAnimeDialog
+import eu.kanade.presentation.more.components.SavedSearchesDialog
 import eu.kanade.presentation.util.AssistContentScreen
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.animesource.AnimeCatalogueSource
@@ -210,6 +211,15 @@ data class BrowseAnimeSourceScreen(
                                 },
                             )
                         }
+                        if (state.isUserQuery || state.filters.isNotEmpty()) {
+                            FilterChip(
+                                selected = false,
+                                onClick = screenModel::openSavedSearches,
+                                label = {
+                                    Text(text = stringResource(MR.strings.saved_searches))
+                                },
+                            )
+                        }
                     }
 
                     HorizontalDivider()
@@ -260,6 +270,16 @@ data class BrowseAnimeSourceScreen(
                     onReset = screenModel::resetFilters,
                     onFilter = { screenModel.search(filters = state.filters) },
                     onUpdate = screenModel::setFilters,
+                )
+            }
+            is BrowseAnimeSourceScreenModel.Dialog.SavedSearches -> {
+                val savedSearches by screenModel.savedSearchesFlow.collectAsState()
+                SavedSearchesDialog(
+                    onDismissRequest = onDismissRequest,
+                    savedSearches = savedSearches,
+                    onSaveSearch = screenModel::saveSearch,
+                    onApplySearch = screenModel::applySavedSearch,
+                    onDeleteSearch = screenModel::deleteSavedSearch,
                 )
             }
             is BrowseAnimeSourceScreenModel.Dialog.AddDuplicateAnime -> {
